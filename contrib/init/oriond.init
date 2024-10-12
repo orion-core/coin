@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+#
+#  oriond The orion core server.
+#
+#
+# chkconfig: 345 80 20
+# description: oriond
+# processname: oriond
+#
+
+# Source function library.
+. /etc/init.d/functions
+
+# you can override defaults in /etc/sysconfig/oriond, see below
+if [ -f /etc/sysconfig/oriond ]; then
+        . /etc/sysconfig/oriond
+fi
+
+RETVAL=0
+
+prog=oriond
+# you can override the lockfile via ORIOND_LOCKFILE in /etc/sysconfig/oriond
+lockfile=${ORIOND_LOCKFILE-/var/lock/subsys/oriond}
+
+# oriond defaults to /usr/bin/oriond, override with ORIOND_BIN
+oriond=${ORIOND_BIN-/usr/bin/oriond}
+
+# oriond opts default to -disablewallet, override with ORIOND_OPTS
+oriond_opts=${ORIOND_OPTS--disablewallet}
+
+start() {
+    echo -n $"Starting $prog: "
+    daemon $DAEMONOPTS $oriond $oriond_opts
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch $lockfile
+    return $RETVAL
+}
+
+stop() {
+    echo -n $"Stopping $prog: "
+    killproc $prog -t600
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && rm -f $lockfile
+    return $RETVAL
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status $prog
+        ;;
+    restart)
+        stop
+        start
+        ;;
+    *)
+        echo "Usage: service $prog {start|stop|status|restart}"
+        exit 1
+        ;;
+esac

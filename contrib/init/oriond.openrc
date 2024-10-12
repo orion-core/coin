@@ -1,0 +1,93 @@
+#!/sbin/openrc-run
+
+# backward compatibility for existing gentoo layout 
+#
+if [ -d "/var/lib/orion/.orion" ]; then
+	ORIOND_DEFAULT_DATADIR="/var/lib/orion/.orion"
+else
+	ORIOND_DEFAULT_DATADIR="/var/lib/oriond"
+fi
+
+ORIOND_CONFIGFILE=${ORIOND_CONFIGFILE:-/etc/orion/orion.conf}
+ORIOND_PIDDIR=${ORIOND_PIDDIR:-/var/run/oriond}
+ORIOND_PIDFILE=${ORIOND_PIDFILE:-${ORIOND_PIDDIR}/oriond.pid}
+ORIOND_DATADIR=${ORIOND_DATADIR:-${ORIOND_DEFAULT_DATADIR}}
+ORIOND_USER=${ORIOND_USER:-${ORION_USER:-orion}}
+ORIOND_GROUP=${ORIOND_GROUP:-orion}
+ORIOND_BIN=${ORIOND_BIN:-/usr/bin/oriond}
+ORIOND_NICE=${ORIOND_NICE:-${NICELEVEL:-0}}
+ORIOND_OPTS="${ORIOND_OPTS:-${ORION_OPTS}}"
+
+name="Orion Core Daemon"
+description="Orion cryptocurrency P2P network daemon"
+
+command="/usr/bin/oriond"
+command_args="-pid=\"${ORIOND_PIDFILE}\" \
+		-conf=\"${ORIOND_CONFIGFILE}\" \
+		-datadir=\"${ORIOND_DATADIR}\" \
+		-daemon \
+		${ORIOND_OPTS}"
+
+required_files="${ORIOND_CONFIGFILE}"
+start_stop_daemon_args="-u ${ORIOND_USER} \
+			-N ${ORIOND_NICE} -w 2000"
+pidfile="${ORIOND_PIDFILE}"
+
+# The retry schedule to use when stopping the daemon. Could be either
+# a timeout in seconds or multiple signal/timeout pairs (like
+# "SIGKILL/180 SIGTERM/300")
+retry="${ORIOND_SIGTERM_TIMEOUT}"
+
+depend() {
+	need localmount net
+}
+
+# verify
+# 1) that the datadir exists and is writable (or create it)
+# 2) that a directory for the pid exists and is writable
+# 3) ownership and permissions on the config file
+start_pre() {
+	checkpath \
+	-d \
+	--mode 0750 \
+	--owner "${ORIOND_USER}:${ORIOND_GROUP}" \
+	"${ORIOND_DATADIR}"
+
+	checkpath \
+	-d \
+	--mode 0755 \
+	--owner "${ORIOND_USER}:${ORIOND_GROUP}" \
+	"${ORIOND_PIDDIR}"
+
+	checkpath -f \
+	-o "${ORIOND_USER}:${ORIOND_GROUP}" \
+	-m 0660 \
+	"${ORIOND_CONFIGFILE}"
+
+	checkconfig || return 1
+}
+
+checkconfig()
+{
+	if grep -qs '^rpcuser=' "${ORIOND_CONFIGFILE}" && \
+		! grep -qs '^rpcpassword=' "${ORIOND_CONFIGFILE}" ; then
+		eerror ""
+		eerror "ERROR: You must set a secure rpcpassword to run oriond."
+		eerror "The setting must appear in ${ORIOND_CONFIGFILE}"
+		eerror ""
+		eerror "This password is security critical to securing wallets "
+		eerror "and must not be the same as the rpcuser setting."
+		eerror "You can generate a suitable random password using the following "
+		eerror "command from the shell:"
+		eerror ""
+		eerror "bash -c 'tr -dc a-zA-Z0-9 < /dev/urandom | head -c32 && echo'"
+		eerror ""
+		eerror "It is recommended that you also set alertnotify so you are "
+		eerror "notified of problems:"
+		eerror ""
+		eerror "ie: alertnotify=echo %%s | mail -s \"Orion Alert\"" \
+			"admin@foo.com"
+		eerror ""
+		return 1
+	fi
+}

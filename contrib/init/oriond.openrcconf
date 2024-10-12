@@ -1,0 +1,33 @@
+# /etc/conf.d/oriond: config file for /etc/init.d/oriond
+
+# Config file location
+#ORIOND_CONFIGFILE="/etc/orion/orion.conf"
+
+# What directory to write pidfile to?  (created and owned by $ORIOND_USER)
+#ORIOND_PIDDIR="/var/run/oriond"
+
+# What filename to give the pidfile
+#ORIOND_PIDFILE="${ORIOND_PIDDIR}/oriond.pid"
+
+# Where to write oriond data (be mindful that the blockchain is large)
+#ORIOND_DATADIR="/var/lib/oriond"
+
+# User and group to own oriond process
+#ORIOND_USER="orion"
+#ORIOND_GROUP="orion"
+
+# Path to oriond executable
+#ORIOND_BIN="/usr/bin/oriond"
+
+# Nice value to run oriond under
+#ORIOND_NICE=0
+
+# Additional options (avoid -conf and -datadir, use flags above)
+#ORIOND_OPTS=""
+
+# The timeout in seconds OpenRC will wait for oriond to terminate
+# after a SIGTERM has been raised.
+# Note that this will be mapped as argument to start-stop-daemon's
+# '--retry' option, which means you can specify a retry schedule
+# here. For more information see man 8 start-stop-daemon.
+ORIOND_SIGTERM_TIMEOUT=600

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Orion Core Security Policy
+    url: https://github.com/orion/orion/blob/master/SECURITY.md
+    about: View security policy
+  - name: Orion Core Developers
+    url: https://bitcoincore.org
+    about: Orion Core homepage
